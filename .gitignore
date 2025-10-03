@@ -1,6 +1,8 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
+# Maven
+/.mvn/timing.properties
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -42,6 +44,7 @@ Thumbs.db
 # Spring Boot
 application-*.local.yml
 application-*.secret.yml
+src/main/resources/application-prod.yml
 
 # Environment
 .env

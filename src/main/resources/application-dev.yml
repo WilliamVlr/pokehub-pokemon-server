@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pokehub
+    username: postgres
+    password: W19valz
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
