@@ -52,12 +52,12 @@ public class PokemonSeeder implements Seeder {
                         .type1(type1)
                         .type2(type2)
                         .region(regions.get(random.nextInt(regions.size())))
-                        .hp((long) faker.number().numberBetween(30, 150))
-                        .attack((long) faker.number().numberBetween(20, 120))
+                        .hp((long) faker.number().numberBetween(50, 999))
+                        .attack((long) faker.number().numberBetween(1, 200))
                         .build();
                 pokemonRepository.save(pokemon);
             }
-            log.info("Poemons seeded successfully (50 dummy records)");
+            log.info("Pokemons seeded successfully (50 dummy records)");
         } else {
             log.info("Pokémons already seeded, skipping...");
         }
