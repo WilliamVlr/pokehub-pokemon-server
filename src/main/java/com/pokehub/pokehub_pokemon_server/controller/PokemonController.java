@@ -1,5 +1,8 @@
 package com.pokehub.pokehub_pokemon_server.controller;
 
+import com.pokehub.pokehub_pokemon_server.dto.PokemonCreateDTO;
+import com.pokehub.pokehub_pokemon_server.dto.PokemonMapper;
+import com.pokehub.pokehub_pokemon_server.dto.PokemonResponseDTO;
 import com.pokehub.pokehub_pokemon_server.model.entity.Pokemon;
 import com.pokehub.pokehub_pokemon_server.service.PokemonService;
 import jakarta.validation.Valid;
@@ -19,28 +22,32 @@ import java.util.List;
 @RequestMapping("/api/pokemons")
 public class PokemonController {
     private final PokemonService pokemonService;
+    private final PokemonMapper pokemonMapper;
 
-    public PokemonController(PokemonService pokemonService) {
+    public PokemonController(PokemonService pokemonService, PokemonMapper pokemonMapper) {
         this.pokemonService = pokemonService;
+        this.pokemonMapper = pokemonMapper;
     }
 
     @GetMapping
-    public ResponseEntity<List<Pokemon>> getAll() {
+    public ResponseEntity<List<PokemonResponseDTO>> getAll() {
         return ResponseEntity.ok(pokemonService.getAllPokemons());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Pokemon> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(pokemonService.getPokemonById(id));
+    public ResponseEntity<PokemonResponseDTO> getById(@PathVariable Long id) {
+        PokemonResponseDTO pokemon = pokemonService.getPokemonById(id);
+        return ResponseEntity.ok(pokemon);
     }
 
     @PostMapping
-    public ResponseEntity<Pokemon> create(@RequestBody @Valid Pokemon pokemon) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(pokemonService.createPokemon(pokemon));
+    public ResponseEntity<PokemonResponseDTO> create(@RequestBody @Valid PokemonCreateDTO dto) {
+        PokemonResponseDTO created = pokemonService.createPokemon(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Pokemon> update(@PathVariable Long id, @RequestBody @Valid Pokemon pokemon) {
+    public ResponseEntity<PokemonResponseDTO> update(@PathVariable Long id, @RequestBody @Valid PokemonCreateDTO pokemon) {
         return ResponseEntity.ok(pokemonService.updatePokemon(id, pokemon));
     }
 

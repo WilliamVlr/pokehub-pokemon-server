@@ -1,52 +1,85 @@
 package com.pokehub.pokehub_pokemon_server.service;
 
+import com.pokehub.pokehub_pokemon_server.dto.PokemonCreateDTO;
+import com.pokehub.pokehub_pokemon_server.dto.PokemonMapper;
+import com.pokehub.pokehub_pokemon_server.dto.PokemonResponseDTO;
 import com.pokehub.pokehub_pokemon_server.exception.ResourceNotFoundException;
 import com.pokehub.pokehub_pokemon_server.model.entity.Pokemon;
+import com.pokehub.pokehub_pokemon_server.model.entity.Region;
+import com.pokehub.pokehub_pokemon_server.model.entity.Type;
 import com.pokehub.pokehub_pokemon_server.repository.PokemonRepository;
+import com.pokehub.pokehub_pokemon_server.repository.RegionRepository;
+import com.pokehub.pokehub_pokemon_server.repository.TypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@Transactional
 public class PokemonService {
     private final PokemonRepository repo;
+    private final TypeRepository typeRepository;
+    private final RegionRepository regionRepository;
+    private final PokemonMapper pokemonMapper;
 
-    public PokemonService(PokemonRepository repo) {
+    public PokemonService(PokemonRepository repo, TypeRepository typeRepository, RegionRepository regionRepository, PokemonMapper pokemonMapper) {
         this.repo = repo;
+        this.typeRepository = typeRepository;
+        this.regionRepository = regionRepository;
+        this.pokemonMapper = pokemonMapper;
     }
 
-    //get All Pokemons
-    public List<Pokemon> getAllPokemons() {
-        return repo.findAll();
+    //get All Pokemon
+    public List<PokemonResponseDTO> getAllPokemons() {
+        return repo.findAll()
+                .stream()
+                .map(pokemonMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
     //get pokemon by id
-    public Pokemon getPokemonById(Long id) {
-        return repo.findById(id).orElse(null);
+    public PokemonResponseDTO getPokemonById(Long id) {
+        Pokemon pokemon = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pokemon not found"));
+        return pokemonMapper.toResponseDTO(pokemon);
     }
 
     //create pokemon
-    public Pokemon createPokemon(Pokemon pokemon) {
-        return repo.save(pokemon);
+    public PokemonResponseDTO createPokemon(PokemonCreateDTO dto) {
+        Type type1 = typeRepository.findById(dto.getType1()).orElseThrow(() -> new ResourceNotFoundException("Type1 not found with ID: " + dto.getType1()));
+        Type type2 = dto.getType2() == null ? null : typeRepository.findById(dto.getType2()).orElseThrow(() -> new ResourceNotFoundException("Type2 not found with ID: " + dto.getType2()));
+        Region region = regionRepository.findById(dto.getRegion()).orElseThrow(() -> new ResourceNotFoundException("Region not found with ID: " + dto.getRegion()));
+
+        Pokemon pokemon = new Pokemon(type1, type2, region, dto.getName(), dto.getHp(), dto.getAttack());
+        return pokemonMapper.toResponseDTO(repo.save(pokemon));
     }
 
     //update pokemon
-    public Pokemon updatePokemon(Long id, Pokemon newPokemon) {
+    public PokemonResponseDTO updatePokemon(Long id, PokemonCreateDTO dto) {
         Pokemon existing = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pokemon with id: " + id + " not found."));
+        Type type1 = typeRepository.findById(dto.getType1()).orElseThrow(() -> new ResourceNotFoundException("Type1 not found with ID: " + dto.getType1()));
+        Type type2 = dto.getType2() == null ? null : typeRepository.findById(dto.getType2()).orElseThrow(() -> new ResourceNotFoundException("Type2 not found with ID: " + dto.getType2()));
+        Region region = regionRepository.findById(dto.getRegion()).orElseThrow(() -> new ResourceNotFoundException("Region not found with ID: " + dto.getRegion()));
 
-        existing.setName(newPokemon.getName());
-        existing.setType1(newPokemon.getType1());
-        existing.setType2(newPokemon.getType2());
-        existing.setHp(newPokemon.getHp());
-        existing.setAttack(newPokemon.getAttack());
-        return repo.save(existing);
+        existing.setName(dto.getName());
+        existing.setType1(type1);
+        existing.setType2(type2);
+        existing.setRegion(region);
+        existing.setHp(dto.getHp());
+        existing.setAttack(dto.getAttack());
+        return pokemonMapper.toResponseDTO(repo.save(existing));
     }
 
     //delete pokemon
     public void deletePokemon(Long id) {
+        if (!repo.existsById(id)) {
+            throw new RuntimeException("Pokemon not found");
+        }
         repo.deleteById(id);
     }
 }

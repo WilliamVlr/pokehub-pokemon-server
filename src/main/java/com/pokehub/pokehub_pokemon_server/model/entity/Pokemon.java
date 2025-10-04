@@ -46,7 +46,7 @@ public class Pokemon {
 
     @Builder
     public Pokemon(Type type1, Type type2, Region region, String name,
-                   Long hp, Long attack, Long defense, Long speed) {
+                   Long hp, Long attack) {
         this.type1 = type1;
         this.type2 = type2;
         this.region = region;
