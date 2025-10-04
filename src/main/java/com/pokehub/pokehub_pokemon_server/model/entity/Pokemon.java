@@ -10,7 +10,8 @@ import lombok.*;
 @Table(name = "pokemons", schema = "pokehub")
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter @Setter
+@Getter
+@Setter
 public class Pokemon {
 
     @Id
