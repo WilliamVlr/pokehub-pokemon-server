@@ -9,6 +9,8 @@ import java.util.List;
 public interface PokemonRepository extends JpaRepository<Pokemon, Long>, JpaSpecificationExecutor<Pokemon> {
     List<Pokemon> findByNameContainingIgnoreCase(String name);
 
+    List<Pokemon> findAllByOrderById();
+
     List<Pokemon> findByType1_Name(String type1);
     List<Pokemon> findByType2_Name(String type2);
 

@@ -1,10 +1,13 @@
 package com.pokehub.pokehub_pokemon_server.controller;
 
+import com.pokehub.pokehub_pokemon_server.dto.AttributeUpdateRequestDTO;
 import com.pokehub.pokehub_pokemon_server.dto.PokemonCreateDTO;
 import com.pokehub.pokehub_pokemon_server.dto.PokemonMapper;
 import com.pokehub.pokehub_pokemon_server.dto.PokemonResponseDTO;
 import com.pokehub.pokehub_pokemon_server.model.entity.Pokemon;
 import com.pokehub.pokehub_pokemon_server.service.PokemonService;
+import com.pokehub.pokehub_pokemon_server.utils.PaginationRequest;
+import com.pokehub.pokehub_pokemon_server.utils.PagingResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +49,23 @@ public class PokemonController {
     @GetMapping
     public ResponseEntity<List<PokemonResponseDTO>> getAll() {
         return ResponseEntity.ok(pokemonService.getAllPokemons());
+    }
+
+    @Operation(summary = "Get all pokemons data with pagination", description = "Fetch all your pokemons data per page.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pokemons retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = PagingResult.class)))
+    })
+    @GetMapping("/paged")
+    public ResponseEntity<PagingResult<PokemonResponseDTO>> getAllPaged(
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @RequestParam(required = false,defaultValue = "20") Integer size,
+            @RequestParam(required = false, defaultValue = "id") String sortField,
+            @RequestParam(required = false, defaultValue = "ASC") Sort.Direction direction
+    ) {
+        final PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+        final PagingResult<PokemonResponseDTO> response = pokemonService.getAllPokemonsPaged(request);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Get a pokemon data", description = "Fetch a pokemon data based on its ID")
@@ -95,6 +116,17 @@ public class PokemonController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         pokemonService.deletePokemon(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Increase pokemon attribute", description = "Increase an attribute stats of a pokemon")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Attribute increased successfully."),
+            @ApiResponse(responseCode = "404", description = "Pokemon not found.")
+    })
+    @PutMapping("/{id}/attribute/increase")
+    public ResponseEntity<Void> increaseAttribute(@PathVariable Long id, @RequestBody AttributeUpdateRequestDTO dto) {
+        pokemonService.increasePokemonAttribute(id, dto.getAttr(), dto.getAmount());
         return ResponseEntity.noContent().build();
     }
 }

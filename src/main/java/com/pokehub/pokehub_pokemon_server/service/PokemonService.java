@@ -7,11 +7,17 @@ import com.pokehub.pokehub_pokemon_server.exception.ResourceNotFoundException;
 import com.pokehub.pokehub_pokemon_server.model.entity.Pokemon;
 import com.pokehub.pokehub_pokemon_server.model.entity.Region;
 import com.pokehub.pokehub_pokemon_server.model.entity.Type;
+import com.pokehub.pokehub_pokemon_server.model.enums.Attribute;
 import com.pokehub.pokehub_pokemon_server.repository.PokemonRepository;
 import com.pokehub.pokehub_pokemon_server.repository.RegionRepository;
 import com.pokehub.pokehub_pokemon_server.repository.TypeRepository;
+import com.pokehub.pokehub_pokemon_server.utils.PaginationRequest;
+import com.pokehub.pokehub_pokemon_server.utils.PaginationUtils;
+import com.pokehub.pokehub_pokemon_server.utils.PagingResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +42,24 @@ public class PokemonService {
 
     //get All Pokemon
     public List<PokemonResponseDTO> getAllPokemons() {
-        return repo.findAll()
+        return repo.findAllByOrderById()
                 .stream()
                 .map(pokemonMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    public PagingResult<PokemonResponseDTO> getAllPokemonsPaged(PaginationRequest request) {
+        final Pageable pageable = PaginationUtils.getPageable(request);
+        final Page<Pokemon> entities = repo.findAll(pageable);
+        final List<PokemonResponseDTO> dtos = entities.stream().map(pokemonMapper::toResponseDTO).toList();
+        return new PagingResult<>(
+                dtos,
+                entities.getTotalPages(),
+                entities.getTotalElements(),
+                entities.getSize(),
+                entities.getNumber(),
+                entities.isEmpty()
+        );
     }
 
     //get pokemon by id
@@ -81,5 +101,34 @@ public class PokemonService {
             throw new RuntimeException("Pokemon not found");
         }
         repo.deleteById(id);
+    }
+
+    public void increasePokemonAttribute(Long id, String attr, int amount) {
+        Pokemon pokemon = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pokemon not found"));
+
+        Attribute attribute;
+
+        // Ubah string menjadi enum dengan aman
+        try {
+            // Gunakan .toUpperCase() agar "hp", "Hp", dan "HP" semua valid
+            attribute = Attribute.valueOf(attr.toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            System.out.println("Atribut tidak valid: " + attr);
+            return; // Keluar dari method jika input tidak valid
+        }
+
+        switch (attribute) {
+            case HP:
+                pokemon.setHp(pokemon.getHp() + amount);
+                break;
+            case ATTACK:
+                pokemon.setAttack(pokemon.getAttack() + amount);
+                break;
+            default:
+                break;
+        }
+
+        repo.save(pokemon);
     }
 }
